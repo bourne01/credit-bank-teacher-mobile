@@ -2,7 +2,7 @@
   <div>
         <my-header>
             <div slot="left" class="left"></div>
-            <div class="center" slot="center">瓯海职专学分银行系统</div>
+            <div class="center" slot="center">技师学院教务系统</div>
             <div slot="right" class="right">
                 <img :src="require('../../assets/me.png')" alt="" @click="isCallMe=!isCallMe">
             </div>
@@ -14,7 +14,7 @@
                 <div class="banner-right"></div>                
             </div>
             <div class="tools">
-                <router-link :to="'/my-schedule/'+me.name" class="view-schedule">
+                <router-link :to="'/my-schedule'" class="view-schedule">
                     <img :src="require('../../assets/schedule.png')" alt="">
                     <span>查课表</span>
                 </router-link>
@@ -22,10 +22,6 @@
                     <img :src="require('../../assets/score.png')" alt="">
                     <span>录成绩</span>
                 </router-link>
-                <a href="http://bank.ohzz.com:81/ma/login.html" class="attendance">
-                    <img :src="require('../../assets/attendance.png')" alt="">
-                    <span>考勤</span>
-                </a>
             </div>
             <div class="isolation-strip"></div>
             <div :style="objHeight">
@@ -37,10 +33,10 @@
                     @exception="getException"
                     :is-exception="isException"></today-class>
                 </div>
-                <div class="isolation-strip"></div>
-                <div class="campus-news">
+                <!-- <div class="isolation-strip"></div> -->
+                <!-- <div class="campus-news">
                     <headline></headline>                
-                </div>
+                </div> -->
             </div>
         </div>
         <div class="me-popup" v-if="isCallMe"><me  @close="closeMe" :me="me"></me></div> 
@@ -77,61 +73,32 @@ export default {
         /**@function 监听me子组件的关闭事件，然后关闭隐藏me组件 */
         closeMe(){
             this.isCallMe = false;
-        },
-        /**@function 获取我的个人信息 */
-        getMyInfo(){
-            let url = '../credit/teacher!getCurrentUserInfo.action';
-            let params = {};
-            this.$http(url,{params})
-                .then( res => {
-                    let objData = res.data;
-                    if(objData.success){
-                        this.me = objData.data;
-                        this.getTermList(this.me.autoId)
-                    }
-                })
-                .catch(err => {
-                    this.reqErrorHandler(err);
-                })
-        },
-        /**@function 获取学期列表 
-         * @param {教师Id} teaId
-        */
-        getTermList(teaId){
-            let url = '../credit/term!getTermList.action';
+        },        
+        /**@function 获取学期列表 */
+        getTermList(){
+            let url = 'api/public/baseWebDat';
             let params = {
-                    state:2,
+                        f:'uxTerm',
+                        state:2,
+                        simple:0
                        };
             this.$http(url,{params})
                 .then( res => {
-                    if(res.data.success){
-                        let termList = res.data.dataList;
-                        sessionStorage.setItem('TermList',JSON.stringify(termList));
-                        for(let term of termList){
-                            if(term.cur == 1){//当前学期值为1
-                                this.curTerm = term;
-                                this.getTeacherSchedule(teaId,term.autoId,2);
-                                break;
-                            }
-                        }
-                    }
-                    
+                    //console.log(res.data);
+                    let termList = res.data.dataList;
+                    sessionStorage.setItem('TermList',JSON.stringify(termList));
+                    this.getMySchedule(termList[0].id);
                 })
                 .catch(err => {
                     this.reqErrorHandler(err);
                 })
         },
         /**@function 获取教师课程表 
-         * @param {教师Id} teaId
          * @param {学期Id} termId
-         * @param {查询角度--教师角度} angle=2 
         */
-        getTeacherSchedule(teaId,termId,angle){
-            let url = '../thrCou2!querySch2.action';
-            let params = {
-                        thrId:teaId,
-                        termId,
-                        angle};
+        getMySchedule(termId){
+            let url = 'api/public/thrCou!mySch.action';
+            let params = {termId,};
             this.$http(url,{params})
                 .then( res => {
                     let objData = res.data
@@ -147,6 +114,9 @@ export default {
                             lineSchedule = [];
                         }
                         sessionStorage.setItem('Schedule',JSON.stringify(this.schedule))
+                    }else if(res.data.message.indexOf('权限错误') != -1){
+                        this.$msgbox('权限错误,正在跳转...','',1000);
+                        //location.href = 'http://my.wzzyzz.com/login?service='+location.href
                     }
                 })
                 .catch(err => {
@@ -158,7 +128,7 @@ export default {
         */
         reqErrorHandler(errObj){
             console.log(errObj);
-            if(errObj.response){
+            if(errObj.response){ 
                 let errResStatus = errObj.response.status; 
                 if(errResStatus == 500 || errResStatus == 504){
                     //this.$msgbox('网络异常','请稍后重试！',2000);
@@ -166,38 +136,23 @@ export default {
                 }else if(errResStatus == 404){
                     //this.$router.push('/page-not/found');
                 }else if(errResStatus == 401){
-                    this.$msgbox('未授权登录,正在跳转...','',1000);
-                    this.$router.push('/login')
-                }
-            }
-            
+                    this.$msgbox('未授权登录,正在跳转...','',500);
+                    //location.href = 'http://my.wzzyzz.com/login?service='+location.href
+            }}
         },
         /**捕获网络异常事件,然后重新发出Ajax请求 */
         getException(){
             this.isException = false;
             //this.$emit('exception');
             console.log('Got an exception from network...')
-            this.getMyInfo();
+            this.getTermList();
         }
-    },
-    /**@function 如果来自登录组件，且自己已被缓存过的，
-     * 则从新向服务器发请求刷新页面 
-     * */
-    activated(){
-        let isFromLogin = sessionStorage.getItem('IsFromLogin');
-        if(isFromLogin == 'True'){
-            this.getMyInfo();            
-            sessionStorage.setItem('IsFromLogin','False');
-        }
-            
     },
     created(){
-        this.getMyInfo();
-        sessionStorage.setItem('IsFromLogin','False');
+        this.getTermList();
     },
     mounted(){
         //this.getTermList();
-        this.curTeacher = this.$route.params.username;
         let htmlHeight = document.documentElement.clientHeight || document.body.clientHeight;
         let htmlWidth = document.documentElement.clientWidth || document.body.clientWidth;
         let tbodyHeight = htmlHeight - (286*htmlWidth/375) + 'px';       

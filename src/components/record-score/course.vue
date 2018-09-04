@@ -2,7 +2,7 @@
     <div class="course" @click="goTo">
         <div class="left">
             <div class="class-name">
-                {{course.className}}
+                {{course.claName?course.claName:course.outClaNm}}
             </div>
             <div class="course-name">{{course.couName}}</div>
         </div>
@@ -24,6 +24,13 @@ export default {
             this.$router.push('/record-score');
         }
     },
+    watch:{
+        course:{
+            handler:function(){
+                console.log('ddd')
+            }
+        }
+    }
   
 }
 </script>

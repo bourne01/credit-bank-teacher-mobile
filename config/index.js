@@ -11,17 +11,17 @@ module.exports = {
     assetsSubDirectory: 'static',
     assetsPublicPath: '/',
     proxyTable: {
-      '/creditBank': {
-        target: 'http://122.228.208.44:9884/creditBank/',
+      '/api': {
+        target: 'http://122.228.208.44:9883/',
         changeOrigin: true,
         pathRewrite: {
-          '^/creditBank': '/'
+          '^/api': '/'
         }
       }
     },
 
     // Various Dev Server settings
-    host: 'localhost', // can be overwritten by process.env.HOST
+    host: '10.0.0.9', // can be overwritten by process.env.HOST
     port: 8080, // can be overwritten by process.env.PORT, if port is in use, a free one will be determined
     autoOpenBrowser: false,
     errorOverlay: true,
@@ -70,7 +70,7 @@ module.exports = {
      * Source Maps
      */
 
-    productionSourceMap: false,
+    productionSourceMap: true,
     // https://webpack.js.org/configuration/devtool/#production
     //devtool: '#source-map',
     devtool: 'eval-source-map',

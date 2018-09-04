@@ -39,7 +39,7 @@ export default {
         line-height: px2rem(100px);
     }
     .left img,.right img{
-        width: px2rem(70px);
+        width: px2rem(50px);
         vertical-align: middle;
     }
     .center{

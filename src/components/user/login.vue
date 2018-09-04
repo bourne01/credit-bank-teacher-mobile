@@ -53,8 +53,8 @@ export default {
         submit(){
             this.$http.defaults.withCredentials=true;
             this.$http.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded';
-            let url = '../login/login!login.action';
-            let params = {no:this.username,password:this.password,operation:1};
+            let url = 'api/public/thr!login.action';
+            let params = {account:this.username,password:this.password};
             this.$http.post(
                     url,
                     require('qs').stringify(params),)
@@ -63,7 +63,9 @@ export default {
                         let username = res.data.message;
                         sessionStorage.setItem('IsFromLogin','True');
                         this.$router.push('/home/');
-                    }else if(res.data.errorMessage.indexOf('accOrPswError') != -1){
+                    }else if(res.data.message.indexOf('账号不能为空') != -1){
+                            this.$msgbox('登录失败','账号不能为空',2000)
+                    }else if(res.data.message.indexOf('账号或密码错误') != -1){
                             this.$msgbox('登录失败','账号或密码错误',2000)
                     }
                 })

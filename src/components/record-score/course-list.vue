@@ -54,18 +54,16 @@ export default {
     methods:{
         /**@function 返回上一个页面 */
         goBack(){
-            this.$router.push('/home')
+            history.go(-1);
         },
         /**@function 获取课程列表
          * @param {学期Id} termId
-         * @param {教师Id} teaId
          */
-        getCourseList(termId,teaId){
-            let url = '../thrCou3!query.action'
+        getCourseList(termId){
+            let url = 'api/public/thrCou!myCou.action'
             let params = {
                 termId,
-                teaId,
-                page:1
+                rstInf:3
             }
             this.$http(url,{params})
                 .then( res => {
@@ -81,42 +79,27 @@ export default {
                     this.reqErrorHandler(err);
                 })
         },
-        /**@function 获取我的个人信息 
-         * @param {学期Id} termId
-        */
-        getMyInfo(termId){
-            let url = '../credit/teacher!getCurrentUserInfo.action';
-            let params = {};
-            this.$http(url,{params})
-                .then( res => {
-                    let objData = res.data;
-                    if(objData.success){
-                        this.teaId = objData.data.autoId;
-                        this.getCourseList(termId,objData.data.autoId);
-                    }
-                })
-                .catch(err => {
-                    this.reqErrorHandler(err);
-                })
-        },
         /**@function 获取学期列表 
         */
         getTermList(){
-            let url = '../baseWebDat';
+            let url = 'api/public/baseWebDat';
             let params = {
-                        f:'comboTerm',
-                        addType:1
+                        f:'uxTerm',
+                        state:2,
+                        simple:0
                        };
             this.$http(url,{params})
                 .then( res => {
                     this.termList = [];//清空已有的学期列表
-                    this.curTermName = res.data[1][1]+' >';
-                    this.curTermId = res.data[1][0]
-                    this.getMyInfo(this.curTermId);
-                    res.data.forEach((elem,idx) => {
-                        this.termList.push({name:res.data[idx][1]+' >',value:res.data[idx][0].toString()})
+                    let termList = res.data.dataList;
+                    let curTerm = termList[0];
+                    this.curTermName = curTerm.name+' >';
+                    this.curTermId = curTerm.id;
+                    this.getCourseList(this.curTermId);
+                    termList.forEach((elem,idx) => {
+                        this.termList.push({name:termList[idx].name+' >',value:termList[idx].id.toString()})
                     });
-                    console.log(this.termList)   
+                    this.termList.unshift({name:"无限制 >",value:''});
                 })
                 .catch(err => {
                     this.reqErrorHandler(err);
@@ -135,8 +118,8 @@ export default {
                 }else if(errResStatus == 404){
                     //this.$router.push('/page-not/found');
                 }else if(errResStatus == 401){
-                    this.$msgbox('未授权登录,正在跳转...','',1000);
-                    this.$router.push('/login')
+                    //this.$msgbox('未授权登录,正在跳转...','',500);
+                    //location.href = 'http://my.wzzyzz.com/login?service='+location.href
                 }
             }
             
@@ -144,44 +127,44 @@ export default {
         /**@function 点击学期列表，获取课程列表 */
         onHide(){
             if(this.value.length == 0)return;//没有选择任何值
-            this.curTermId = this.value[0];//设置当前学期
-            this.getCourseList(this.value[0],this.teaId);
+            this.curTermId = this.value[0];//设置当前学期Id
+            this.getCourseList(this.value[0]);
         },
         /**@function 点击课程进入成绩录入页面 
          * @param {课程对象列表中的下标} index
         */
         goRecordScore(index){
             let course = this.courses[index];
-            //console.log(course);
+            console.log(course);
             this.$router.push({
                     path:'/record-score',
                     query:{
                         couName:course.couName,
-                        claId:course.classId,
+                        claId:course.claId,
                         couId:course.couId,
                         termId:this.curTermId}
             })
         }
     },
     created(){
-        let termList = JSON.parse(sessionStorage.getItem('TermList'));
+        //let termList = JSON.parse(sessionStorage.getItem('TermList'));
         /**@function 学期列表为null或为[]*/
-        if(!termList || termList.length == 0){
+        /* if(!termList || termList.length == 0){
             this.getTermList();
             return;
         }        
         //转换termList的数据格式，适合页面显示{name:,value:}
-        termList.forEach( elem => {
-            if(elem.cur == '1'){
-                this.curTermId = elem.autoId;//当前学期Id
-                this.curTermName = elem.name+' >';
-            }
-            this.termList.push({name:elem.name+' >',value:elem.autoId.toString()})
+        let curTerm = termList[0];
+        this.curTermName = curTerm.name+' >';
+        this.curTermId = curTerm.id;
+        termList.forEach(elem => {
+            this.termList.push({name:elem.name+' >',value:elem.id.toString()})
         })
         //console.log(this.termList);
         this.termList.unshift({name:"无限制 >",value:''});
         console.log(this.termList);
-        this.getMyInfo(this.curTermId);
+        this.getCourseList(this.curTermId); */
+        this.getTermList();
     },
     mounted(){
         /* let selector = document.querySelector('.vux-popup-picker-select');

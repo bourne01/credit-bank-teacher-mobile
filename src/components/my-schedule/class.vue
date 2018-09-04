@@ -5,7 +5,7 @@
         <div class="popup-wrap" v-if="isPopup">
             <div class="detail-popup" >
                 <header>
-                    <span>{{this.myClass.name}}</span>
+                    <span>{{myClass.name}}</span>
                     <img :src="require('../../assets/close.png')" alt="" @click="isPopup=false">
                 </header>
                 <div class="class-detail">
@@ -43,7 +43,7 @@
                                 <img :src="require('../../assets/teacher.png')" alt="">
                                 <span>教师</span>
                             </label>
-                            <span>{{curTeacher}}</span>
+                            <span>{{me.name}}</span>
                     </div>
                 </div>
                 <!-- <div class="class-student">
@@ -86,14 +86,14 @@ export default {
             ],
             heights:[//某一天连续课节数的高度，1节，2节相连，3节相连，4节相连...
                     '',
-                    (208-14)/37.5+'rem',
-                    (208*2-14)/37.5+'rem',
-                    (208*3-14)/37.5+'rem',
-                    (208*4-14)/37.5+'rem',
-                    (208*5-14)/37.5+'rem',
-                    (208*6-14)/37.5+'rem',
-                    (208*7-14)/37.5+'rem',
-                    (208*8-14)/37.5+'rem',
+                    (124-14)/37.5+'rem',
+                    (124*2-14)/37.5+'rem',
+                    (124*3-14)/37.5+'rem',
+                    (124*4-14)/37.5+'rem',
+                    (124*5-14)/37.5+'rem',
+                    (124*6-14)/37.5+'rem',
+                    (124*7-14)/37.5+'rem',
+                    (124*8-14)/37.5+'rem',
             ],
             courseSpan:0,//多少节相同的连续课
             classInfo:'',//课程信息
@@ -103,7 +103,7 @@ export default {
             curTerm:{},//当前学期
             curWeek:'',//当前第几周
             curWeekday:'',//当前星期几,
-            curTeacher:'',//当前教师            
+            me:'',//当前教师            
         }
     },
     computed:{
@@ -118,13 +118,13 @@ export default {
                 textAlign:this.column == 0?'center':'',
                 fontSize:this.column == 0?24/37.5+'rem':'',
                 width:this.column == 0?46/37.5+'rem':'',
-                height:this.column == 0?194/37.5+'rem':this.heights[this.courseSpan],
-                lineHeight:this.column == 0?194/37.5+'rem':'',
+                height:this.column == 0?110/37.5+'rem':this.heights[this.courseSpan],
+                lineHeight:this.column == 0?110/37.5+'rem':'',
             }
         },
         weekday:function(){
-            let weekdaysCn = ['未知','周一','周二','周三','周四','周五','周六','周日'];
-            return weekdaysCn[this.curWeekday] 
+            let weekdaysCn = ['周一','周二','周三','周四','周五','周六','周日'];
+            return weekdaysCn[this.column-1]; 
         },
         curMonth:function(){
             let dt = new Date();
@@ -135,49 +135,101 @@ export default {
         /**@function 监听点击课程事件，弹窗展示课程详情 */
         onClick(){
             this.isPopup = true;
-            console.log('Row:'+this.row,'Column:'+this.column);
-            console.log(this.classTable[this.row][this.column])
+            /* console.log('Row:'+this.row,'Column:'+this.column);
+            console.log(this.classTable[this.row][this.column]) */
             this.curClass = this.classTable[this.row][this.column];
             /**@function 获取教学周信息 */
             this.getCurWeek();
-            this.curTeacher = this.$route.params.username;
+            this.getMyInfo();
+            //this.curTeacher = this.$route.params.username;
+        },
+        /**@function 获取我的个人信息 */
+        getMyInfo(){
+            let url = 'api/public/thr!myInf.action';
+            let params = {};
+            this.$http(url,{params})
+                .then( res => {
+                    let objData = res.data;
+                    if(objData.success){
+                        this.me = objData.data;
+                        //this.getTermList(this.me.autoId)
+                    }
+                })
+                .catch(err => {
+                    this.reqErrorHandler(err);
+                })
         },
         /**@function 获取当前是第几周 */
         getCurWeek(){
-            let url = '../credit/term!getCurWeek.action';
-            let params = {state:2};
+            let url = 'api/public/term!weekN.action';
+            let params = {};
             this.$http(url,{params})
                 .then( res => {
-                    console.log(res);
                     let objData = res.data;
                     if(objData.success){
-                        this.curWeek = objData.week;
-                        this.curWeekday = objData.weekday;
+                        this.curWeek = objData.weekN;
+                        let dt = new Date();
+                        if(dt.getDay() == 0){
+                            this.curWeekday = 7;
+                        }else{
+                            this.curWeekday = dt.getDay();
+                        }
                     }else{
+                        console.log(objData);
                         this.$msgbox(objData.message);
                     }
                 })
                 .catch( err => {
-
+                    this.reqErrorHandler(err);
                 })
         },
-        /**@function 当字符串的长度大于4个字符时，只截取前4个，剩下内容用"..."表示 
+        /**@function Ajax请求异常处理 
+         * @param {出错对象} errObj
+        */
+        reqErrorHandler(errObj){
+            console.log(errObj);
+            if(errObj.response){ 
+                let errResStatus = errObj.response.status; 
+                if(errResStatus == 500 || errResStatus == 504){
+                    //this.$msgbox('网络异常','请稍后重试！',2000);
+                    this.isException = true;
+                }else if(errResStatus == 404){
+                    //this.$router.push('/page-not/found');
+                }else if(errResStatus == 401){
+                    //this.$msgbox('未授权登录,正在跳转...','',500);
+                    //location.href = 'http://my.wzzyzz.com/login?service='+location.href
+            }}
+        },
+        /**@function 当字符串的长度大于4个字符时，只截取前4 X 课程连接数（如第1、2节课）个，剩下内容用"..."表示 
          * @param {目标字符串} str
         */
         mySubString(str){
-            if(str.length > 5)
-                str = str.substring(0,5) + '...';
+            /* if(str.length > 5){
+                let _str = str;
+                str = _str.substring(0,5*this.courseSpan);
+                if(_str.length > 5*this.courseSpan)
+                    str = str + '...';
+            }                
+            return str; */
+            if(str.length > 14){
+                let _str = str;
+                str = _str.substring(0,14*this.courseSpan);
+                if(_str.length > 14*this.courseSpan)
+                    str = str + '...';               
+            }                
             return str;
-        }
+        },       
         },
         
     created(){        
         let courseName = this.myClass.name;//本节课程名称
+        let _className = this.myClass.classname;//本节授课班级名称
         let classTableLen = this.classTable.length;//课表总长度
         /**@function 找出当天具有连续的相同课程名和教室的课 */
         for(let i=this.row;i<classTableLen;i++){
             let _curClass = this.classTable[i][this.column];
-            if(_curClass.name == courseName && _curClass.isShow == false){//同列中是否存在连续的同名且同教室的课程，且未被显示
+            if(_curClass.name == courseName && _curClass.classname == _className &&
+               _curClass.isShow == false){//同列中是否存在连续的同名且同教室的课程，且未被显示
                 this.courseSpan++;
                 _curClass.isShow = true;//设置课程为显示
             }else{
@@ -192,20 +244,27 @@ export default {
             this.isShow = true;
             this.classInfo = this.row+1;
         }else{
-            this.classInfo = this.mySubString(this.myClass.classname)+'<br>'+
+            this.classInfo ="<span>"+this.mySubString(this.myClass.name)+"</span>"; /* this.mySubString(this.myClass.classname);+'<br>'+
                             this.mySubString(this.myClass.name)+'<br>'+
-                            this.mySubString(this.myClass.classroom);
+                            this.mySubString(this.myClass.classroom); */
         }
         /**@function 从本地session中获取当前学期信息 */
-        let termList = JSON.parse(sessionStorage.getItem('TermList'));
-        for(let term of termList){
-            if(term.cur == 1){//当前学期值为1
-                this.curTerm = term;
-                break;
-            }
-        }
+        //let termList = JSON.parse(sessionStorage.getItem('TermList'));
+        /**@function 学期列表为null或为[]*/
+        /* if(!termList || termList.length == 0){
+            this.getTermList();
+            return;
+        } 
+        this.curTerm = termList[0]; */
         
-        
+    },
+    mounted(){
+       /*  let me = JSON.parse(sessionStorage.getItem('Me'));
+        if(!me){
+            this.getMyInfo();
+        }else{
+            this.me = me;
+        } */
     }
 }
 </script>
@@ -221,7 +280,7 @@ export default {
         //background-color:rgb(194,199,208);
         text-align: left;
         font-size:px2rem(24px);
-        height:px2rem(194px);
+        height:px2rem(110px);
         position: absolute;
         top:px2rem(2px);
         left:px2rem(2px);
@@ -230,6 +289,9 @@ export default {
         //box-shadow:0px 0px  0px px2rem(2px) rgb(163,170,185);
         color:#fff;
         z-index: 10;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
     }
     .popup-wrap{
         position: fixed;

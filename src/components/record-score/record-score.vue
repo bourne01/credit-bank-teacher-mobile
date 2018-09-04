@@ -13,10 +13,10 @@
             <thead>
                 <tr>
                     <th class="name">姓名</th>
-                    <th class="process-score">平时成绩<br>学分</th>
-                    <th class="mid-term-score">期中成绩<br>学分</th>
-                    <th class="final-term-score">期末成绩<br>学分</th>
-                    <th class="total-score">总评<br>学分</th>
+                    <th class="process-score">平时成绩<!-- <br>学分< --></th>
+                    <th class="mid-term-score">期中成绩<!-- <br>学分 --></th>
+                    <th class="final-term-score">期末成绩<!-- <br>学分 --></th>
+                    <th class="total-score">总评<!-- <br>学分 --></th>
                 </tr>
             </thead>
         </table>
@@ -41,31 +41,26 @@
                         <td>
                             <input type="text" :placeholder="placeholder" 
                                 v-model="result.ordScore" 
-                                :disabled="isDisabled"><br>
-                                <span>{{Math.floor(2*result.ordScore*0.3)/100}}</span>
+                                :disabled="isDisabled"><!-- <br>
+                                <span>{{result.ordScore/10}}</span> -->
                         </td>
                         <td>
                             <input type="text" :placeholder="placeholder" 
                                 v-model="result.midScore" 
-                                :disabled="isDisabled"><br>
-                               <!--  <span>{{result.midCredit}}</span> -->
-                               <span>{{Math.floor(2*result.midScore*0.3)/100}}</span>
+                                :disabled="isDisabled"><!-- <br>
+                                <span>{{result.midCredit}}</span> -->
                         </td>
                         <td>
                             <input type="text" :placeholder="placeholder" 
                                 v-model="result.finScore" 
-                                :disabled="isDisabled"><br>
-                               <!--  <span>{{result.finCredit}}</span> -->
-                               <span>{{Math.floor(2*result.finScore*0.3)/100}}</span>
+                                :disabled="isDisabled"><!-- <br>
+                                <span>{{result.finCredit}}</span> -->
                         </td>
                         <td>
-                            <!-- <input type="text" :placeholder="placeholder" 
-                                v-model="result.senScore" 
-                                :disabled="isDisabled"><br> -->
-                                <!-- <span>{{result.senCredit}}</span> -->
-                                <span>{{Math.ceil((result.ordScore*0.3+result.midScore*0.3+result.finScore*0.4)*100)/100}}</span>
-                                <br>
-                                <span>{{Math.floor(result.ordScore*0.3+result.midScore*0.3+result.finScore*0.4)/100}}</span>
+                            <input type="text" :placeholder="placeholder" 
+                                v-model="result.termScore" 
+                                :disabled="isDisabled"><!-- <br>
+                                <span>{{result.senCredit}}</span> -->
                         </td>
                     </tr>                
                 </tbody>
@@ -90,7 +85,7 @@ export default {
             placeholder:'',
             courseName:'',//课程名称
             /**以下四个为当前正在编辑的学生学分初始数据 */
-            stuId:'09700101',//学生编号
+            stuId:'19700101',//学生编号
             midScore:null,//期中成绩
             finScore:null,//期末成绩
             ordScore:null,//平时成绩
@@ -119,7 +114,7 @@ export default {
         },
         /**@function 获取学生课程结果信息 */
         getCourseResult(queryParams){
-            let url = '../stuCouResult2!queryOne.action';
+            let url = 'api/stuCouRst!queryOneCou.action';
             let params = {
                         termId:queryParams.termId,
                         claId:queryParams.claId,
@@ -151,8 +146,7 @@ export default {
                 let midCredit = null;//期中分数对应的学分
                 let ordCredit = null;//平时分数对应的学分
                  //防止乱点事件产生提交
-                console.log(2)
-                if(this.stuId == '09700101')
+                if(this.stuId == '19700101')
                     return;
                 if(this.stuId != this.stuResult){
 
@@ -181,7 +175,7 @@ export default {
                 /**如果期末、期中和平时成绩都没有更改，则返回 */
                 if(!finScore && !midScore && !ordScore)
                     return;
-                let url = '../stuCouResult2!newOrEdit.action';
+                let url = 'api/stuCouRst!save.action.action';
                 let params = {
                             finScore,
                             midScore,
@@ -197,30 +191,29 @@ export default {
                     })
                     .catch( err => {
                         this.reqErrorHandler(err);
+                        
                     })
-            }, 100);
+            }, 1000);
            
         },
-         /**@function Ajax请求异常处理 
+        /**@function Ajax请求异常处理 
          * @param {出错对象} errObj
         */
         reqErrorHandler(errObj){
             console.log(errObj);
-            if(errObj.response){
-                let errResStatus = errObj.response.status; 
-                if(errResStatus == 500 || errResStatus == 504){
-                    //this.$msgbox('网络异常','请稍后重试！',2000);
-                    this.isException = true;
-                }else if(errResStatus == 404){
-                    //this.$router.push('/page-not/found');
-                }else if(errResStatus == 401){
-                    this.$msgbox('未授权登录,正在跳转...','',1000);
-                    this.$router.push('/login')
-                }
-            }
-            
-        },
-    },    
+            let errResStatus = errObj.response.status; 
+            if(errResStatus == 500 || errResStatus == 504){
+                //this.$msgbox('网络异常','请稍后重试！',2000);
+                this.isException = true;
+            }else if(errResStatus == 404){
+                //this.$router.push('/page-not/found');
+            }else if(errResStatus == 401){
+                this.$msgbox('未授权登录,正在跳转...','',500);
+                location.href = 'http://my.wzzyzz.com/login?service='+location.href
+            } 
+        }, 
+    },   
+       
     created(){
         console.log(this.$route.query);
         let params = this.$route.query;
@@ -229,8 +222,7 @@ export default {
     },
     mounted(){
         let htmlHeight = document.documentElement.clientHeight || document.body.clientHeight;
-        let htmlWidth = document.documentElement.clientWidth || document.body.clientWidth;
-        let tbodyHeight = htmlHeight - (88*htmlWidth/375) + 'px';       
+        let tbodyHeight = (htmlHeight - 50 -38)*2/37.5+'rem'; 
         this.tbodyObj.height = tbodyHeight;
     }
 }
@@ -281,6 +273,10 @@ export default {
         text-align:center;
         border-right:1px solid #f2f3f9;
         width:px2rem(138px);
+    }
+    td>span{
+        color:#a3b2b9;
+        font-size:px2rem(24px);
     }
     tbody td:first-child{
         padding-left:px2rem(4px);

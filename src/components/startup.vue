@@ -1,6 +1,11 @@
 <template>
     <div style="position:relative">
-        <img class="startup" :src="require('../assets/startup.png')" alt="">
+        
+        <div class="top"></div>
+        <div class="middle"></div>
+        <div class="bottom">
+            <img :src="require('../assets/logo.png')" alt="">
+        </div>
         <div class="count-down" @click="skip">{{countDown}}s&nbsp;跳过</div>
     </div>
 </template>
@@ -17,9 +22,18 @@ export default {
         skip(){
             this.$router.push('/login');
             clearInterval(this.timer)
+        },
+        /**@function 根据不同的分辨计算div.top盒子高度*/
+        setDivTopHeight(){
+            let divTop = document.querySelector(".top");
+            let htmlHeight = document.documentElement.clientHeight || document.body.clientHeight;
+            let htmlWidth = document.documentElement.clientWidth || document.body.clientWidth;
+            let divTopHeight = htmlHeight - (920*htmlWidth/375) + 'px';       
+            divTop.height = divTopHeight
         }
     },
     mounted(){
+        
         /**@function 倒计时3秒跳转到登录页面*/
         this.timer = setInterval(()=>{
             this.countDown--;
@@ -39,6 +53,13 @@ export default {
     img.startup{
         width:px2rem(750px);
     }
+    .top{
+        background-image:url("../assets/startup-bg.png");
+    }
+    .middle{
+        height:px2rem(48px);
+        background-color:#3e5b97;
+        }
     .count-down{
         position: absolute;
         right:px2rem(40px);
